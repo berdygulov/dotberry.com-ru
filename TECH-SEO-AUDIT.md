@@ -17,7 +17,7 @@
 
 | # | Проблема | Приоритет | Кто исправляет |
 |---|---|---|---|
-| 1 | Автоматический редирект `/` → `/ru` по языку браузера (307), в том числе для Googlebot | 🔴 Высокий | Разработка |
+| 1 | Автоматический редирект на `/ru/...` по языку браузера (307) со всех EN-страниц, без `Vary: Accept-Language` | 🔴 Высокий | Разработка |
 | 2 | /pricing: зоны подгружаются кнопкой, порядок меняется при каждой загрузке, в списке дубли | 🔴 Высокий | Разработка |
 | 3 | Ошибка 500 на служебных URL (`/favicon.ico`, `/manifest.json`, `/llms.txt`, `/index.html` …) | 🟠 Средний | Разработка |
 | 4 | У `www.dotberry.com` нет DNS-записи | 🟠 Средний | DevOps |
@@ -33,25 +33,67 @@
 
 ## 1. Редирект по языку браузера (Accept-Language) 🔴
 
+Редирект срабатывает не только на главной, а на **всех EN-страницах**.
+
 **Доказательства: curl.**
 
 ```
-Accept-Language: ru-RU,ru;q=0.9           -> 307 https://dotberry.com/ru
-Accept-Language: kk-KZ,kk;q=0.9,ru;q=0.8  -> 307 https://dotberry.com/ru
-Accept-Language: en-US,en;q=0.9           -> 200
-Accept-Language: de-DE                    -> 200
-Cookie NEXT_LOCALE=en + Accept-Language ru -> 200
-UA Googlebot + Accept-Language: ru        -> 307 https://dotberry.com/ru
+/          Accept-Language: ru-RU,ru;q=0.9             -> 307 https://dotberry.com/ru
+/          Accept-Language: kk-KZ,kk;q=0.9,ru;q=0.8    -> 307 https://dotberry.com/ru
+/          Accept-Language: en-US,en;q=0.9             -> 200
+/          Accept-Language: de-DE                      -> 200
+/          Cookie NEXT_LOCALE=en + Accept-Language: ru -> 200
+/pricing   Accept-Language: ru-RU,ru;q=0.9             -> 307 https://dotberry.com/ru/pricing
+/domains   Accept-Language: ru-RU,ru;q=0.9             -> 307 https://dotberry.com/ru/domains
+любой URL  Cookie NEXT_LOCALE=ru                       -> 307 на /ru/...
+/          UA Googlebot + Accept-Language: ru          -> 307 https://dotberry.com/ru
+/          UA YandexBot, без Accept-Language           -> 200
+/          UA YandexBot + Accept-Language: ru          -> 307 https://dotberry.com/ru
 ```
+
+В ответе-редиректе есть только `Location`: нет ни `Vary: Accept-Language`, ни `Cache-Control`.
 
 **Доказательства: Chrome.** Переход на `https://dotberry.com/` открыл `https://dotberry.com/ru`. Последующие заходы на `/pricing` и `/domains` тоже перебрасывались на `/ru/...`, потому что в cookie записалось `NEXT_LOCALE=ru`.
 
-**Чем это опасно:**
-- Google не рекомендует автоматически редиректить по языку и IP: краулер может не увидеть одну из версий. Googlebot обычно приходит без Accept-Language, поэтому сейчас он видит EN. YandexBot и другие краулеры могут вести себя иначе.
-- Пользователь из RU/KZ не может открыть EN-версию по прямой ссылке без cookie. Это ломает шаринг ссылок и мешает сравнению версий.
-- Ответ 307 на `/` зависит от заголовка. Если появится CDN-кэш, без `Vary: Accept-Language` в нём могут смешаться языки.
+**Что говорит Google** ([Managing multi-regional and multilingual sites](https://developers.google.com/search/docs/specialty/international/managing-multi-regional-sites)):
+- *«Avoid automatically redirecting users from one language version of a site to a different language version of a site»*, *«don't redirect based on what you think the user's language may be»*: не редиректить автоматически на другую языковую версию по предполагаемому языку пользователя.
+- Причина: *«These redirections could prevent users (and search engines) from viewing all the versions of your site»* — такие редиректы мешают пользователям и поисковикам увидеть все версии сайта.
+- Googlebot *«usually originates from the USA»* и *«sends HTTP requests without setting Accept-Language»*: обходит в основном из США и без Accept-Language. Поэтому сейчас он видит EN-версию, и hreflang работает.
+- Рекомендуемая альтернатива: отдельные URL для языков, hreflang и ссылки на другие языковые версии на каждой странице.
+- Оговорка ([Tell Google about localized versions](https://developers.google.com/search/docs/specialty/international/localized-versions)): для *«language/country selectors or auto-redirecting home pages»* Google советует указывать `x-default`. То есть автоматический редирект **с главной** — известный Google сценарий. Общая рекомендация при этом — редиректов избегать.
 
-**Что сделать:** убрать автоматический редирект. Вместо него показывать ненавязчивый баннер «Перейти на русскую версию?». hreflang уже настроен корректно — этого достаточно.
+**Не проверено:** шлёт ли настоящий YandexBot заголовок Accept-Language. Подстановка его User-Agent этого не показывает. Проверить в Яндекс.Вебмастере: «Проверка ответа сервера» и статистика обхода.
+
+**Чем это опасно:**
+- Пользователь из RU/KZ не может открыть EN-страницу по прямой ссылке: редиректят все URL, а не только главная. Это ломает ссылки, которыми делятся, и мешает сравнивать версии.
+- Если какой-то краулер приходит с Accept-Language `ru` (возможно, YandexBot), он не увидит EN-версию.
+- Ответ по одному URL зависит от заголовка запроса, но сервер не сообщает об этом через `Vary`. Как только появится CDN или кэш nginx, языки перемешаются, см. ниже.
+
+**Зачем нужен `Vary: Accept-Language`.** Кэш (CDN, nginx, браузер) по умолчанию хранит одну копию на URL. Заголовок `Vary` говорит ему, что ответ зависит от указанного заголовка запроса и копий нужно несколько. Что будет с CDN без `Vary`:
+
+```
+1. Первым на / заходит пользователь из Алматы (Accept-Language: ru)
+   → CDN получает от сервера 307 на /ru и кэширует его для URL "/"
+2. Следом заходит пользователь из Берлина (Accept-Language: en)
+   → CDN отдаёт ему из кэша 307 на /ru
+3. Googlebot (без Accept-Language)
+   → тоже получает 307 на /ru, и hreflang ломается
+```
+
+Бывает и наоборот: в кэш попадает EN-страница, и русскоязычные посетители не получают редирект. При этом `Vary: Accept-Language` кэшируется плохо: значений заголовка тысячи (`ru-RU,ru;q=0.9,en;q=0.8`, `kk-KZ,ru;q=0.7`…), и на каждое создаётся отдельная копия. Для ответа-редиректа надёжнее совсем запретить общий кэш (`Cache-Control: private, no-store`). Лучше всего вообще не делать ответ зависимым от языка.
+
+У сайта уже есть `Vary: rsc, next-router-state-tree, …, Accept-Encoding`: так Next.js разделяет HTML- и RSC-ответы и сжатые/несжатые версии. Не хватает только `Accept-Language`.
+
+**Что сделать.** Из поиска пользователь и так попадает на свою версию: благодаря hreflang Google показывает русскоязычным `/ru/...`. Редирект нужен только для прямых заходов. Варианты, от лучшего к худшему:
+
+1. **Рекомендуется: баннер вместо редиректа.** Например: «Похоже, вы говорите по-русски. Перейти на русскую версию?» Риска для SEO нет, это совпадает с рекомендацией Google. hreflang уже настроен корректно.
+2. **Компромисс, если клиенту нужен автоматический выбор языка:**
+   - редиректить только главную `/` → `/ru`. Внутренние URL (`/pricing`, `/domains` и т.д.) никогда не редиректить: по прямой ссылке человек должен видеть то, что ему прислали;
+   - редиректить только при первом заходе, если нет cookie выбора языка. Когда пользователь сам переключил язык, записать cookie и больше не редиректить;
+   - отдавать код 302/307 с `Vary: Accept-Language` и `Cache-Control: private`;
+   - Googlebot отдельно не обрабатывать: он приходит без Accept-Language и сам получает EN. Отдельная логика для ботов похожа на клоакинг;
+   - `x-default` оставить на `/`, как в примере Google для «auto-redirecting home pages».
+3. **Не рекомендуется: оставить как есть,** с редиректом по всем URL и без `Vary`.
 
 ## 2. Страница /pricing: подгрузка, случайный порядок, дубли 🔴
 
