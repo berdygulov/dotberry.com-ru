@@ -1,0 +1,98 @@
+Замер TTFB и кэш-заголовков dotberry.com
+Время: 2026-11-26 20:26–20:27 UTC.
+Инструмент: curl (Git Bash, Windows), одно подключение, без Accept-Language (= EN-версия), без cookie.
+
+=== Контроль канала (другие хосты) ===
+www.google.com      tcp=0.120 tls=0.217 ttfb=0.489 total=5.524 size=88242   (первый запрос)
+www.google.com      tcp=0.082 tls=0.169 ttfb=0.293 total=0.827 size=88197   107 КБ/с
+nextjs.org/docs     tcp=0.322 tls=0.408 ttfb=0.669 total=2.043 size=444411  218 КБ/с
+nextjs.org/docs     tcp=0.083 tls=0.166 ttfb=0.281 total=2.784 size=444411  160 КБ/с
+cdnjs react-dom     tcp=0.069 tls=0.098 ttfb=0.126 total=0.232 size=131835  568 КБ/с
+cdnjs react-dom     tcp=0.060 tls=0.088 ttfb=0.116 total=0.450 size=131835  293 КБ/с
+
+=== Серия 1: 5 запросов подряд, статус + TTFB + x-nextjs-cache + Cache-Control ===
+/              #1 200 ttfb=1.963897 cache=STALE  cc=s-maxage=300, stale-while-revalidate=31535700
+/              #2 200 ttfb=0.396484 cache=HIT    cc=s-maxage=300, stale-while-revalidate=31535700
+/              #3 200 ttfb=0.463912 cache=HIT    cc=s-maxage=300, stale-while-revalidate=31535700
+/              #4 200 ttfb=0.838644 cache=HIT    cc=s-maxage=300, stale-while-revalidate=31535700
+/              #5 200 ttfb=0.356173 cache=HIT    cc=s-maxage=300, stale-while-revalidate=31535700
+/domains       #1 200 ttfb=0.358564 cache=-      cc=private, no-cache, no-store, max-age=0, must-revalidate
+/domains       #2 200 ttfb=0.345708 cache=-      cc=private, no-cache, no-store, max-age=0, must-revalidate
+/domains       #3 200 ttfb=0.333190 cache=-      cc=private, no-cache, no-store, max-age=0, must-revalidate
+/domains       #4 200 ttfb=0.415033 cache=-      cc=private, no-cache, no-store, max-age=0, must-revalidate
+/domains       #5 200 ttfb=0.353064 cache=-      cc=private, no-cache, no-store, max-age=0, must-revalidate
+/pricing       #1 200 ttfb=0.374406 cache=-      cc=private, no-cache, no-store, max-age=0, must-revalidate
+/pricing       #2 200 ttfb=1.036106 cache=-      cc=private, no-cache, no-store, max-age=0, must-revalidate
+/pricing       #3 200 ttfb=0.360346 cache=-      cc=private, no-cache, no-store, max-age=0, must-revalidate
+/pricing       #4 200 ttfb=0.314001 cache=-      cc=private, no-cache, no-store, max-age=0, must-revalidate
+/pricing       #5 200 ttfb=0.382753 cache=-      cc=private, no-cache, no-store, max-age=0, must-revalidate
+/how-it-works  #1 200 ttfb=0.447942 cache=-      cc=private, no-cache, no-store, max-age=0, must-revalidate
+/how-it-works  #2 200 ttfb=0.401954 cache=-      cc=private, no-cache, no-store, max-age=0, must-revalidate
+/how-it-works  #3 200 ttfb=0.309086 cache=-      cc=private, no-cache, no-store, max-age=0, must-revalidate
+/how-it-works  #4 200 ttfb=0.406958 cache=-      cc=private, no-cache, no-store, max-age=0, must-revalidate
+/how-it-works  #5 200 ttfb=0.331429 cache=-      cc=private, no-cache, no-store, max-age=0, must-revalidate
+/terms         #1 200 ttfb=0.419706 cache=HIT    cc=s-maxage=31536000
+/terms         #2 200 ttfb=0.402479 cache=HIT    cc=s-maxage=31536000
+/terms         #3 200 ttfb=0.383718 cache=HIT    cc=s-maxage=31536000
+/terms         #4 200 ttfb=0.381685 cache=HIT    cc=s-maxage=31536000
+/terms         #5 200 ttfb=0.380719 cache=HIT    cc=s-maxage=31536000
+/ru            #1 200 ttfb=0.359642 cache=STALE  cc=s-maxage=300, stale-while-revalidate=31535700
+/ru            #2 200 ttfb=0.353677 cache=HIT    cc=s-maxage=300, stale-while-revalidate=31535700
+/ru            #3 200 ttfb=0.384261 cache=HIT    cc=s-maxage=300, stale-while-revalidate=31535700
+/ru            #4 200 ttfb=0.353029 cache=HIT    cc=s-maxage=300, stale-while-revalidate=31535700
+/ru            #5 200 ttfb=0.323445 cache=HIT    cc=s-maxage=300, stale-while-revalidate=31535700
+/ru/domains    #1 200 ttfb=0.362646 cache=-      cc=private, no-cache, no-store, max-age=0, must-revalidate
+/ru/domains    #2 200 ttfb=0.369495 cache=-      cc=private, no-cache, no-store, max-age=0, must-revalidate
+/ru/domains    #3 200 ttfb=0.341469 cache=-      cc=private, no-cache, no-store, max-age=0, must-revalidate
+/ru/domains    #4 200 ttfb=0.461561 cache=-      cc=private, no-cache, no-store, max-age=0, must-revalidate
+/ru/domains    #5 200 ttfb=0.378600 cache=-      cc=private, no-cache, no-store, max-age=0, must-revalidate
+/ru/pricing    #1 200 ttfb=0.354291 cache=-      cc=private, no-cache, no-store, max-age=0, must-revalidate
+/ru/pricing    #2 200 ttfb=0.349400 cache=-      cc=private, no-cache, no-store, max-age=0, must-revalidate
+/ru/pricing    #3 200 ttfb=0.387637 cache=-      cc=private, no-cache, no-store, max-age=0, must-revalidate
+/ru/pricing    #4 200 ttfb=0.381109 cache=-      cc=private, no-cache, no-store, max-age=0, must-revalidate
+/ru/pricing    #5 200 ttfb=0.350810 cache=-      cc=private, no-cache, no-store, max-age=0, must-revalidate
+
+=== Серия 2: разбивка по фазам (с, накопительно от начала запроса), size = байт без сжатия ===
+/robots.txt  #1 200 dns=0.004 tcp=0.100 tls=0.196 ttfb=0.283 total=0.283 size=70     cache=HIT
+/robots.txt  #2 200 dns=0.005 tcp=0.099 tls=0.190 ttfb=0.273 total=0.273 size=70     cache=HIT
+/robots.txt  #3 200 dns=0.010 tcp=0.091 tls=0.184 ttfb=0.270 total=0.270 size=70     cache=HIT
+static .js   #1 200 dns=0.013 tcp=0.109 tls=0.204 ttfb=0.296 total=0.296 size=6530
+static .js   #2 200 dns=0.006 tcp=0.134 tls=0.224 ttfb=0.307 total=0.307 size=6530
+static .js   #3 200 dns=0.011 tcp=0.107 tls=0.199 ttfb=0.287 total=0.287 size=6530
+/            #1 200 dns=0.006 tcp=0.094 tls=0.192 ttfb=0.371 total=0.667 size=177882 cache=HIT
+/            #2 200 dns=0.011 tcp=0.090 tls=0.180 ttfb=0.354 total=0.610 size=177882 cache=HIT
+/            #3 200 dns=0.005 tcp=0.083 tls=0.174 ttfb=0.332 total=0.543 size=177882 cache=HIT
+/terms       #1 200 dns=0.043 tcp=0.123 tls=0.216 ttfb=0.383 total=0.735 size=314436 cache=HIT
+/terms       #2 200 dns=0.009 tcp=0.105 tls=0.191 ttfb=0.340 total=0.632 size=314436 cache=HIT
+/terms       #3 200 dns=0.012 tcp=0.099 tls=0.198 ttfb=0.373 total=0.703 size=314436 cache=HIT
+/pricing     #1 200 dns=0.005 tcp=0.085 tls=0.176 ttfb=0.337 total=0.520 size=131204
+/pricing     #2 200 dns=0.013 tcp=0.109 tls=0.202 ttfb=0.371 total=0.573 size=131204
+/pricing     #3 200 dns=0.006 tcp=0.101 tls=0.199 ttfb=0.376 total=0.579 size=131204
+/domains     #1 200 dns=0.012 tcp=0.107 tls=0.201 ttfb=0.386 total=0.678 size=109641
+/domains     #2 200 dns=0.041 tcp=0.112 tls=0.195 ttfb=0.339 total=0.492 size=109641
+/domains     #3 200 dns=0.005 tcp=0.085 tls=0.176 ttfb=0.336 total=0.503 size=109641
+
+=== Серия 3: gzip (как браузер) ===
+/          ttfb=0.370 total=0.389 size=37894   97 КБ/с
+/          ttfb=0.377 total=0.398 size=37894   95 КБ/с
+/terms     ttfb=0.351 total=0.440 size=50316  114 КБ/с
+/terms     ttfb=0.341 total=0.429 size=50316  117 КБ/с
+/pricing   ttfb=0.415 total=0.438 size=28797   66 КБ/с
+/pricing   ttfb=0.357 total=0.377 size=28797   76 КБ/с
+/domains   ttfb=0.404 total=0.423 size=25379   60 КБ/с
+/domains   ttfb=0.348 total=0.368 size=25379   69 КБ/с
+Самый большой JS-чанк /_next/static/chunks/06owhnoqtp2wk.js:
+gzip  ttfb=0.346 total=0.458 size=84330   184 КБ/с
+raw   ttfb=0.408 total=0.750 size=279216  372 КБ/с
+gzip  ttfb=0.371 total=0.484 size=84330   174 КБ/с
+raw   ttfb=0.364 total=1.061 size=279216  263 КБ/с
+(скорость на мелких файлах занижена: файл скачивается быстрее, чем TCP успевает разогнаться)
+
+=== Заголовки ответа / ===
+Server: nginx
+Vary: Accept-Encoding
+Vary: rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch, Accept-Encoding
+x-nextjs-cache: HIT
+X-Powered-By: Next.js
+Cache-Control: s-maxage=300, stale-while-revalidate=31535700
+(признаков CDN — cf-ray, x-cache, age, via — нет)

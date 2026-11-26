@@ -36,7 +36,7 @@
 
 - **Next.js** (App Router, ISR: `x-nextjs-cache`, `s-maxage=300, stale-while-revalidate`), за **nginx**.
 - Локализация через middleware (`NEXT_LOCALE` cookie, rewrite `/` → `/en`).
-- `http://` → 301 на `https://` ✅; у `www.dotberry.com` **нет DNS-записи** (уточнено в [TECH-SEO-AUDIT.md](../TECH-SEO-AUDIT.md), п. 5). Canonical на страницах указывает на `https://dotberry.com` ✅.
+- `http://` → 301 на `https://` ✅; у `www.dotberry.com` **нет DNS-записи** (уточнено в [TECH-SEO-AUDIT.md](../TECH-SEO-AUDIT.md), п. 4). Canonical на страницах указывает на `https://dotberry.com` ✅.
 - gzip ✅. Аналитика: **Яндекс.Метрика** (GA/GTM не обнаружены).
 - Шрифты — self-hosted woff2 через next/font ✅.
 
