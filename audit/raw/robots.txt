@@ -1,0 +1,4 @@
+User-Agent: *
+Disallow: /?
+
+Sitemap: https://dotberry.com/sitemap.xml
