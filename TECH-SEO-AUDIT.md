@@ -255,7 +255,7 @@ from controlled to uncontrolled (or vice versa).
 
 ## 11. Sitemap и robots.txt 🟡
 
-**Доказательства:** снапшоты в `audit/raw/`, повторная проверка 27.11 (curl, файл не изменился).
+**Доказательства:** снапшоты в `audit/raw/`.
 - robots.txt: `User-Agent: * / Disallow: /? / Sitemap: …` — корректно.
 - sitemap.xml отдаётся корректно: `200`, `application/xml`, валидный XML. Все URL и их RU-версии отдают 200 без редиректов, canonical самоссылающийся, `noindex` нет. Можно отправлять в GSC и Яндекс.Вебмастер.
 - Недочёты:
